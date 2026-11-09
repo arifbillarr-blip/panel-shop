@@ -1,0 +1,1776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Panel Shop Reseller Panel</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Inter:wght@400;500;600;700&family=Fredoka:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        html, body {
+            width: 100%;
+            overflow-x: hidden;
+            position: relative;
+            background-color: #0f172a;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Animated Toast Notification for Login/Auth Feedback */
+        #auth-toast {
+            position: fixed;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100000;
+            min-width: 280px;
+            padding: 14px 20px;
+            border-radius: 12px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            transition: top 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55), opacity 0.3s ease;
+            opacity: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        #auth-toast.show {
+            top: 20px;
+            opacity: 1;
+        }
+        #auth-toast.success {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: #ffffff;
+            border: 1px solid #4ade80;
+        }
+        #auth-toast.error {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: #ffffff;
+            border: 1px solid #f87171;
+            animation: shakeToast 0.4s ease-in-out;
+        }
+        @keyframes shakeToast {
+            0%, 100% { transform: translateX(-50%); }
+            20%, 60% { transform: translateX(-55%); }
+            40%, 80% { transform: translateX(-45%); }
+        }
+
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0f172a, #1e1b4b, #311042);
+            z-index: 999999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            cursor: pointer;
+            transition: opacity 0.5s ease;
+        }
+
+        .splash-content {
+            text-align: center;
+            z-index: 10;
+            padding: 20px;
+            animation: scaleInSplash 1s ease-out forwards;
+        }
+
+        .splash-arabic-text {
+            font-size: 26px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 15px;
+            text-shadow: 0 4px 15px rgba(99, 102, 241, 0.5);
+            font-family: 'Amiri', 'Poppins', sans-serif;
+            letter-spacing: 1px;
+        }
+
+        .splash-sub-text {
+            font-size: 14px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-weight: 600;
+        }
+
+        @keyframes scaleInSplash {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .flower-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .flower {
+            position: absolute;
+            top: -10%;
+            color: #f43f5e;
+            font-size: 20px;
+            animation: fallFlower linear infinite;
+            opacity: 0.8;
+        }
+
+        @keyframes fallFlower {
+            0% { transform: translateY(-10vh) translateX(0) rotate(0deg); opacity: 1; }
+            50% { transform: translateY(50vh) translateX(30px) rotate(180deg); }
+            100% { transform: translateY(110vh) translateX(-30px) rotate(360deg); opacity: 0.2; }
+        }
+
+        .page-transition {
+            animation: fadeInPage 0.4s ease-in-out forwards;
+        }
+        @keyframes fadeInPage {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .no-animation {
+            animation: none !important;
+            transition: none !important;
+        }
+
+        button, .card-bg, .card-booyah, .menu-list li {
+            transition: all 0.2s ease-in-out;
+        }
+        button:active, .card-booyah:active {
+            transform: scale(0.96);
+        }
+
+        #loader-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.95); z-index: 99999; flex-direction: column;
+            justify-content: center; align-items: center;
+        }
+        .spinner-box {
+            width: 60px; height: 60px; border: 5px solid #f3f3f3; border-top: 5px solid #6366f1;
+            border-radius: 50%; animation: spin 1s linear infinite;
+        }
+        .success-check { display: none; color: #22c55e; font-size: 60px; animation: bounceIn 0.5s; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes bounceIn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+        #login-section { background-color: #ffffff; display: flex; flex-direction: column; min-height: 100vh; align-items: center; width: 100%; }
+        .logo-container { margin-top: 25px; text-align: center; margin-bottom: 10px; }
+        
+        .security-icon-wrapper { width: 60px; height: 60px; border: 3px solid #6366f1; border-radius: 16px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin: 0 auto 10px; background: #fff; }
+        .security-icon-wrapper img { width: 100%; height: 100%; object-fit: cover; }
+        .security-icon-wrapper i { color: #6366f1; }
+
+        .brand-name { font-weight: 600; letter-spacing: 3px; color: #1a1c2e; font-size: 14px; text-transform: uppercase; }
+
+        .login-card { width: 90%; max-width: 400px; padding: 10px 15px; margin-bottom: 5px; }
+        .login-card h2 { font-size: 20px; color: #333; margin-bottom: 2px; font-weight: 700; }
+        .login-card p.subtitle { color: #888; font-size: 11px; margin-bottom: 12px; }
+        .input-group { margin-bottom: 12px; text-align: left; }
+        .input-group label { display: block; font-size: 10px; font-weight: 600; color: #9ea7b8; margin-bottom: 4px; text-transform: uppercase; }
+        .input-wrapper { position: relative; display: flex; align-items: center; }
+        .input-wrapper i { position: absolute; left: 12px; color: #cbd5e1; }
+        .input-field { width: 100%; padding: 10px 12px 10px 40px; background: #f7f8fa; border: 2px solid #f7f8fa; border-radius: 10px; font-size: 13px; outline: none; transition: 0.3s; box-sizing: border-box; }
+        .input-field:focus { border-color: #6366f1; background: #fff; }
+        .sign-in-btn { width: 100%; padding: 12px; background: #6366f1; color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 6px; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2); box-sizing: border-box; }
+        .auth-toggle { text-align: center; margin-top: 10px; font-size: 12px; color: #64748b; }
+        .auth-toggle a { color: #6366f1; text-decoration: none; font-weight: 600; cursor: pointer; }
+
+        .support-footer { margin-top: auto; width: 100%; background: #0f172a; color: white; padding: 20px 15px; border-radius: 20px 20px 0 0; box-sizing: border-box; }
+        .support-header-text { text-align: center; font-weight: 700; color: #ffffff; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; font-size: 14px; }
+        .support-card-login { background: #1e293b; padding: 12px 15px; border-radius: 12px; display: flex; align-items: center; gap: 12px; margin-bottom: 10px; text-decoration: none; color: inherit; border: 1px solid #334155; box-sizing: border-box; }
+        .support-card-login .support-info p { font-size: 11px; color: #94a3b8; margin: 0; font-weight: 500; }
+        .support-card-login .support-info h4 { font-size: 15px; margin-top: 2px; font-weight: 700; margin: 0; word-break: break-all; color: #ffffff; }
+        .copyright-login { text-align: center; font-size: 11px; color: #94a3b8; padding: 8px 0 0; background: #0f172a; }
+
+        #user-dashboard { display: none; background-color: #f8faff; color: #1a1c2e; min-height: 100vh; width: 100%; }
+        header { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; width: 100%; box-sizing: border-box; }
+        .logo-area { display: flex; align-items: center; gap: 10px; }
+        .logo-icon { width: 35px; height: 35px; background: #6366f1; color: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .logo-icon img { width: 100%; height: 100%; object-fit: cover; }
+        .logo-text h1 { font-size: 16px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; margin: 0; }
+        .logo-text p { font-size: 9px; color: #6366f1; font-weight: bold; text-transform: uppercase; margin: 0; }
+
+        .sidebar { position: fixed; top: 0; right: -280px; width: 280px; height: 100%; background: #fff; box-shadow: -5px 0 15px rgba(0,0,0,0.1); transition: 0.3s; z-index: 1000; padding: 20px; box-sizing: border-box; }
+        .sidebar.active { right: 0; }
+        .sidebar-header { border-bottom: 1px solid #f0f0f0; padding-bottom: 15px; margin-bottom: 15px; }
+        .sidebar-header p { font-size: 11px; color: #94a3b8; font-weight: bold; text-transform: uppercase; margin: 0; }
+        .sidebar-header h3 { font-size: 15px; color: #1a1c2e; margin: 4px 0 0; word-break: break-all; }
+        .menu-list { list-style: none; padding: 0; margin: 0; }
+        .menu-list li { padding: 12px 0; display: flex; align-items: center; gap: 12px; cursor: pointer; color: #475569; font-weight: 500; font-size: 14px; border-bottom: 1px solid #f8fafc; }
+        .menu-list li i { color: #6366f1; font-size: 16px; width: 20px; text-align: center; }
+        .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: none; z-index: 999; }
+
+        .container { padding: 15px; max-width: 480px; margin: 0 auto; box-sizing: border-box; }
+        .card { background: #fff; border-radius: 16px; padding: 20px; margin-bottom: 15px; text-align: center; border: 1px solid #f0f0f0; box-sizing: border-box; }
+        .profile-img { background: #f0f2ff; width: 70px; height: 70px; border-radius: 18px; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; color: #6366f1; }
+        .welcome-text h2 { font-size: 18px; margin-bottom: 8px; font-weight: 700; word-break: break-all; padding: 0 10px; }
+        .badge-group { display: flex; justify-content: center; gap: 8px; }
+        .badge { padding: 4px 12px; border-radius: 6px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+        .badge-active { background: #e8f5e9; color: #2e7d32; }
+        .badge-reseller { background: #ede7f6; color: #5e35b1; }
+
+        .wallet-card { border: 2px solid #6366f1; text-align: left; display: flex; flex-direction: column; }
+        .wallet-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .wallet-label { color: #888; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+        .balance { font-size: 28px; font-weight: 800; word-break: break-all; }
+        .btn-primary { background: #6366f1; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; font-size: 15px; width: 100%; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; box-sizing: border-box; }
+        .inventory-card { text-align: left; position: relative; }
+        .get-keys-card { text-align: left; border-bottom: 4px solid #f59e0b; position: relative; }
+        .card-icon-abs { position: absolute; right: 20px; top: 20px; color: #cbd5e1; }
+        .stat-val { font-size: 24px; font-weight: 800; margin: 8px 0; }
+        .btn-secondary { background: #f1f5f9; border: none; padding: 10px; border-radius: 10px; width: 100%; font-weight: 600; color: #475569; cursor: pointer; font-size: 13px; box-sizing: border-box; }
+        .btn-warning { background: #f59e0b; color: white; }
+
+        .support-section { background: #0f172a; color: white; padding: 25px 15px; border-radius: 20px 20px 0 0; margin-top: 15px; box-sizing: border-box; width: 100%; }
+        .support-title { text-align: center; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; font-size: 15px; font-weight: 700; }
+        .support-item { background: #1e293b; padding: 12px 15px; border-radius: 12px; display: flex; align-items: center; gap: 12px; margin-bottom: 10px; cursor: pointer; text-decoration: none; color: inherit; box-sizing: border-box; }
+        .support-info p { font-size: 11px; color: #94a3b8; margin: 0; font-weight: 500; }
+        .support-info h4 { font-size: 15px; margin-top: 2px; font-weight: 700; margin: 0; word-break: break-all; color: #ffffff; }
+
+        footer { text-align: center; padding: 15px; font-size: 11px; color: #94a3b8; background: #0f172a; box-sizing: border-box; width: 100%; }
+        .highlight { color: #f59e0b; font-weight: bold; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 15px; box-sizing: border-box; }
+        .modal-card { background: #ffffff; width: 100%; max-width: 380px; padding: 25px; border-radius: 20px; position: relative; font-family: 'Poppins', sans-serif; box-sizing: border-box; }
+        .close-btn { position: absolute; top: 20px; right: 20px; color: #9ea7b8; background: #e9ecef; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; cursor: pointer; }
+        .modal-card h2 { font-size: 20px; color: #1a202c; margin-bottom: 15px; font-weight: 600; text-align: left; }
+        .input-label { display: block; font-size: 11px; font-weight: 600; color: #9ea7b8; margin-bottom: 6px; text-transform: uppercase; text-align: left; }
+        .input-field-modal { width: 100%; padding: 12px; border: 2px solid #f7f8fa; border-radius: 12px; background-color: #f7f8fa; font-size: 15px; color: #1a202c; outline: none; margin-bottom: 15px; box-sizing: border-box; }
+        .confirm-btn { width: 100%; padding: 14px; border: none; border-radius: 12px; background-color: #5e5ce6; color: white; font-size: 15px; font-weight: 600; cursor: pointer; box-sizing: border-box; }
+
+        .payment-card-ui { background-color: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; min-height: 100vh; padding: 15px; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; box-sizing: border-box; }
+        .payment-card { background: white; width: 100%; max-width: 400px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); overflow: hidden; padding-bottom: 15px; box-sizing: border-box; }
+        .top-bar { height: 35px; border-bottom: 1px solid #eee; position: relative; display: flex; justify-content: flex-end; align-items: center; padding-right: 12px; }
+        .exit-btn { color: #888; font-size: 18px; font-weight: bold; cursor: pointer; text-decoration: none; padding: 5px; }
+        
+        .header-bkash { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; }
+        .reseller-info { display: flex; align-items: center; gap: 10px; overflow: hidden; }
+        .logo-box { width: 35px; height: 35px; background-color: #001e2b; border-radius: 5px; display: flex; justify-content: center; align-items: center; color: #00d2ff; font-weight: bold; font-size: 16px; flex-shrink: 0; overflow: hidden; }
+        .logo-box img { width: 100%; height: 100%; object-fit: cover; }
+        .reseller-text h3 { font-size: 12px; color: #555; font-weight: normal; margin: 0; }
+        .reseller-text p { font-size: 10px; color: #777; margin: 0; word-break: break-all; }
+        .bkash-logo { width: 65px; flex-shrink: 0; }
+        
+        .instruction-box { background-color: #d12053; margin: 0 12px; border-radius: 8px; padding: 15px; color: white; text-align: center; box-sizing: border-box; }
+        .instruction-box h4 { font-size: 13px; margin-bottom: 10px; font-weight: 500; }
+        .trnx-input { width: 100%; padding: 10px; border: none; border-radius: 5px; margin-bottom: 10px; text-align: center; font-size: 13px; color: #333 !important; background: #fff !important; outline: none; box-sizing: border-box; }
+        .steps-list { text-align: left; list-style: none; font-size: 11px; line-height: 1.5; padding: 0; margin: 0; }
+        .steps-list li { position: relative; padding-left: 12px; margin-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 4px; }
+        .steps-list li::before { content: "•"; position: absolute; left: 0; }
+        .highlight-yellow { color: #fffb00; font-weight: bold; }
+        .copy-btn { background: #eee; color: #333; border: none; padding: 2px 6px; border-radius: 3px; font-size: 10px; margin-left: 4px; cursor: pointer; }
+        .verify-btn { background-color: #d12053; color: white; border: none; width: calc(100% - 24px); margin: 12px auto 0; display: block; padding: 12px; border-radius: 5px; font-weight: bold; font-size: 13px; cursor: pointer; box-sizing: border-box; }
+
+        #buy-keys-page { display: none; background-color: #121212; color: #ffffff; font-family: 'Inter', sans-serif; min-height: 100vh; padding: 15px; box-sizing: border-box; width: 100%; }
+        .card-bg { background-color: #1e1e1e; border: 1px solid #2d2d2d; transition: 0.3s; cursor: pointer; box-sizing: border-box; }
+        .card-bg:hover { border-color: #4ade80; transform: translateY(-2px); }
+        .green-text { color: #4ade80; }
+        #profileMenu { display: none; }
+        #profileMenu.show { display: block; }
+
+        #booyah-root-section { display: none; background-color: #121212; color: white; padding: 15px; min-height: 100vh; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; box-sizing: border-box; width: 100%; }
+        .booyah-container { width: 100%; max-width: 400px; background-color: #1a1a1a; border-radius: 15px; padding: 15px; box-shadow: 0 0 20px rgba(0,0,0,0.5); position: relative; margin: 0 auto; box-sizing: border-box; }
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 8px; }
+        .section-title { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 600; }
+        .menu-icon-booyah { cursor: pointer; font-size: 18px; color: white; padding: 5px; }
+        .dropdown-menu-booyah { display: none; position: absolute; top: 55px; right: 15px; background: #252525; border: 1px solid #444; border-radius: 10px; width: 190px; z-index: 1000; box-shadow: 0 5px 15px rgba(0,0,0,0.5); box-sizing: border-box; }
+        .dropdown-menu-booyah.show { display: block; }
+        .user-info-booyah { padding: 10px 12px; border-bottom: 1px solid #333; font-size: 10px; color: #888; }
+        .user-info-booyah strong { display: block; color: white; font-size: 13px; word-break: break-all; }
+        .dropdown-menu-booyah a { display: flex; align-items: center; gap: 10px; padding: 10px 12px; color: #ccc; text-decoration: none; font-size: 13px; box-sizing: border-box; }
+        .dropdown-menu-booyah a:hover { background: #333; }
+        .card-booyah { background: #252525; border: 1px solid #333; border-radius: 12px; padding: 15px; margin-bottom: 12px; text-align: center; position: relative; transition: 0.3s; box-sizing: border-box; }
+        .card-booyah:hover { border-color: #2ecc71; box-shadow: 0 0 10px rgba(46, 204, 113, 0.3); }
+        .card-booyah h3 { font-size: 15px; margin-bottom: 6px; color: #ffffff; font-weight: 600; }
+        .duration-badge { background: #2ecc71; color: black; font-weight: bold; font-size: 11px; padding: 3px 10px; border-radius: 5px; display: inline-block; margin-bottom: 10px; }
+        .price-booyah { font-size: 20px; font-weight: bold; margin-bottom: 12px; display: block; }
+        .buy-btn-booyah { background: #2ecc71; color: black; border: none; width: 100%; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 14px; box-sizing: border-box; }
+
+        .purchase-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); display: none; justify-content: center; align-items: center; z-index: 10000; padding: 15px; box-sizing: border-box; }
+        .modal-custom { background-color: #121212; width: 100%; max-width: 340px; border-radius: 15px; padding: 18px; border: 1px solid #333; color: white; position: relative; font-family: 'Segoe UI', sans-serif; box-sizing: border-box; }
+        .modal-custom .header-custom { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; margin-bottom: 15px; }
+        .modal-custom .header-custom i { color: #2ecc71; }
+        .modal-custom .close-btn-custom { position: absolute; right: 15px; top: 15px; color: #888; cursor: pointer; }
+        .modal-custom .product-info-custom { text-align: center; margin-bottom: 12px; }
+        .modal-custom .product-title-custom { font-size: 15px; font-weight: bold; margin-bottom: 4px; word-break: break-all; }
+        .modal-custom .badge-custom { background-color: rgba(46, 204, 113, 0.2); color: #2ecc71; padding: 2px 10px; border-radius: 15px; font-size: 11px; font-weight: bold; display: inline-block; }
+        .modal-custom .quantity-selector-custom { display: flex; justify-content: center; align-items: center; gap: 12px; margin-bottom: 15px; }
+        .modal-custom .q-btn-custom { background-color: #1a2c22; border: 1px solid #2ecc7144; color: #2ecc71; width: 38px; height: 35px; border-radius: 8px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+        .modal-custom .q-input-custom { background-color: #222; border: 1px solid #444; color: white; width: 70px; height: 35px; text-align: center; font-size: 15px; border-radius: 8px; outline: none; box-sizing: border-box; }
+        .modal-custom .price-container-custom { background-color: rgba(46, 204, 113, 0.05); border: 1px solid #2ecc71; border-radius: 10px; padding: 10px; display: flex; justify-content: space-between; margin-bottom: 15px; box-sizing: border-box; }
+        .modal-custom .price-label-custom { color: #aaa; font-size: 11px; margin-bottom: 2px; }
+        .modal-custom .price-value-custom { font-size: 15px; font-weight: bold; }
+        .modal-custom .total-value-custom { color: #2ecc71; font-size: 16px; font-weight: bold; }
+        .modal-custom .footer-buttons-custom { display: flex; gap: 8px; }
+        .modal-custom .btn-custom { flex: 1; padding: 10px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 13px; box-sizing: border-box; }
+        .modal-custom .btn-cancel-custom { background-color: #343a40; color: white; }
+        .modal-custom .btn-confirm-custom { background-color: #2ecc71; color: #000; }
+
+        #inventory-page { display: none; background-color: #0a0a0a; color: #ffffff; min-height: 100vh; padding: 15px; font-family: 'Inter', sans-serif; box-sizing: border-box; width: 100%; }
+        .header-inv { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .header-left-inv { display: flex; align-items: center; gap: 8px; }
+        .header-left-inv h1 { font-size: 18px; font-weight: 700; margin: 0; }
+        .keys-badge-inv { background-color: rgba(34, 197, 94, 0.15); color: #22c55e; border: 1px solid #22c55e; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+        .dropdown-menu-inv { position: fixed; top: 60px; right: 15px; background-color: white; color: #000; width: 220px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); display: none; flex-direction: column; z-index: 100; overflow: hidden; box-sizing: border-box; }
+        .dropdown-menu-inv.active { display: flex; }
+        .dropdown-header-inv { padding: 10px 12px; border-bottom: 1px solid #eee; box-sizing: border-box; }
+        .dropdown-header-inv p { color: #666; font-size: 9px; text-transform: uppercase; font-weight: 700; margin: 0 0 2px; }
+        .dropdown-header-inv h3 { margin: 0; font-size: 13px; word-break: break-all; }
+        .dropdown-item-inv { display: flex; align-items: center; padding: 10px 12px; gap: 10px; text-decoration: none; color: #333; font-weight: 500; font-size: 13px; box-sizing: border-box; }
+        .dropdown-item-inv:hover { background-color: #f5f5f5; }
+
+        .empty-card-inv { background-color: #141414; border: 1px solid #262626; border-radius: 16px; padding: 40px 15px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 20px; box-sizing: border-box; }
+        .key-icon-large-inv { font-size: 50px; color: #333; margin-bottom: 12px; }
+        .empty-text-inv { color: #a3a3a3; font-size: 15px; margin-bottom: 0; }
+        
+        .table-wrapper { background-color: #141414; border-radius: 12px; border: 1px solid #262626; overflow-x: auto; margin-bottom: 20px; box-sizing: border-box; }
+        .table-wrapper table { width: 100%; border-collapse: collapse; min-width: 480px; }
+        .table-wrapper th { text-align: left; padding: 12px; color: #a3a3a3; font-size: 12px; font-weight: 500; border-bottom: 1px solid #262626; }
+        .table-wrapper td { padding: 12px; border-bottom: 1px solid #262626; color: white; vertical-align: middle; font-size: 13px; }
+
+        /* AI FLOATING BUTTON & CHAT UI */
+        #ai-fab {
+            position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px;
+            background: linear-gradient(135deg, #ef4444 0%, #3b82f6 100%); 
+            border: 2px solid #60a5fa; border-radius: 50%;
+            display: none; align-items: center; justify-content: center; color: #ffffff;
+            font-size: 26px; cursor: pointer; z-index: 99998; 
+            box-shadow: 0 4px 20px rgba(239, 68, 68, 0.5);
+            animation: pulse-fab-red-blue 2s infinite;
+        }
+        @keyframes pulse-fab-red-blue {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 14px rgba(239, 68, 68, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        /* SPIN WHEEL FLOATING BUTTON */
+        #spin-fab {
+            position: fixed; bottom: 90px; right: 20px; width: 50px; height: 50px;
+            background: linear-gradient(135deg, #f59e0b 0%, #ec4899 100%); 
+            border: 2px solid #fde047; border-radius: 50%;
+            display: none; align-items: center; justify-content: center; color: #ffffff;
+            font-size: 22px; cursor: pointer; z-index: 99998; 
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.6);
+            animation: rotateSpinBtn 4s linear infinite;
+        }
+        @keyframes rotateSpinBtn {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .glass-box {
+            background: rgba(26, 26, 46, 0.95);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        }
+        .wheel-outer-shadow {
+            filter: drop-shadow(0px 15px 25px rgba(0, 0, 0, 0.5));
+        }
+        .spin-btn {
+            background: linear-gradient(180deg, #8bf66e 0%, #3bbd2d 50%, #299b1d 100%);
+            box-shadow: 0 8px 0 #1b6813, 0 15px 20px rgba(0, 0, 0, 0.3), inset 0 4px 6px rgba(255, 255, 255, 0.7);
+            text-shadow: 1px 2px 3px rgba(0, 0, 0, 0.3);
+            transition: all 0.1s ease;
+        }
+        .spin-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 0 #1b6813, 0 18px 25px rgba(0, 0, 0, 0.35), inset 0 4px 6px rgba(255, 255, 255, 0.8);
+        }
+        .spin-btn:active:not(:disabled) {
+            transform: translateY(6px);
+            box-shadow: 0 2px 0 #1b6813, 0 5px 10px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .spin-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            filter: grayscale(40%);
+        }
+        .pointer-shadow {
+            filter: drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.4));
+        }
+
+        #ai-chat-window {
+            position: fixed; bottom: 90px; right: 20px; width: 350px; max-width: 90vw; height: 480px;
+            background: #0f172a; border: 1.5px solid #3b82f6; border-radius: 16px; display: none;
+            flex-direction: column; z-index: 99999; box-shadow: 0 10px 30px rgba(0,0,0,0.8); overflow: hidden;
+            font-family: 'Inter', sans-serif; animation: fadeInUp 0.3s ease; box-sizing: border-box;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .ai-header { 
+            background: linear-gradient(135deg, #dc2626 0%, #2563eb 100%); 
+            padding: 12px 15px; display: flex; align-items: center; justify-content: space-between; 
+            border-bottom: 1px solid rgba(255,255,255,0.2); box-sizing: border-box; 
+        }
+        .ai-profile { display: flex; align-items: center; gap: 10px; }
+        .ai-avatar { 
+            width: 35px; height: 35px; background: rgba(255,255,255,0.2); 
+            border-radius: 50%; display: flex; align-items: center; justify-content: center; 
+            color: #fff; border: 1px solid #ffffff; 
+        }
+        .ai-title h4 { margin: 0; font-size: 14px; color: #fff; font-weight: bold; }
+        .ai-status { font-size: 11px; color: #60a5fa; display: flex; align-items: center; gap: 4px; font-weight: 600; }
+        .ai-status::before { content: ''; width: 6px; height: 6px; background: #60a5fa; border-radius: 50%; display: inline-block; }
+        .ai-close { color: #ffffff; font-size: 18px; cursor: pointer; background: none; border: none; }
+        
+        .ai-messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background: #0b0f19; box-sizing: border-box; }
+        .ai-msg { max-width: 80%; padding: 10px 14px; border-radius: 12px; font-size: 13px; line-height: 1.4; word-break: break-word; box-sizing: border-box; }
+        .ai-msg.bot { background: #1e293b; color: #fff; align-self: flex-start; border-bottom-left-radius: 2px; border: 1px solid #3b82f6; }
+        .ai-msg.user { background: linear-gradient(135deg, #ef4444, #dc2626); color: #ffffff; align-self: flex-end; border-bottom-right-radius: 2px; font-weight: 500; }
+        
+        .ai-input-area { padding: 10px 12px; background: #0f172a; border-top: 1px solid #1e293b; display: flex; align-items: center; gap: 8px; box-sizing: border-box; }
+        .ai-input-field { flex: 1; background: #1e293b; border: 1px solid #3b82f6; border-radius: 20px; padding: 8px 14px; color: #fff; font-size: 13px; outline: none; box-sizing: border-box; }
+        .ai-input-field:focus { border-color: #ef4444; }
+        .ai-send-btn { 
+            width: 36px; height: 36px; 
+            background: linear-gradient(135deg, #ef4444, #3b82f6); 
+            color: #ffffff; border: none; border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; 
+            cursor: pointer; flex-shrink: 0; 
+        }
+        .ai-whatsapp-btn { display: inline-flex; align-items: center; gap: 6px; background: #22c55e; color: #fff; padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: bold; text-decoration: none; margin-top: 6px; }
+    </style>
+</head>
+<body>
+
+    <!-- Animated Login Notification Toast -->
+    <div id="auth-toast">
+        <i id="toast-icon" class="fas fa-exclamation-circle"></i>
+        <span id="toast-message">Login Failed! Check Email & Password</span>
+    </div>
+
+    <!-- Splash Screen -->
+    <div id="splash-screen" onclick="dismissSplashScreen()">
+        <div class="flower-container" id="flowerContainer"></div>
+        <div class="splash-content">
+            <div class="splash-arabic-text" id="splashTitleText">السَّلَامُ عَلَيْكُمْ، كَيْفَ حَالُكُمْ جَمِيعًا؟</div>
+            <div class="splash-sub-text" id="splashSubText">Welcome to Panel Shop</div>
+            <div style="margin-top: 25px; font-size: 11px; color: #cbd5e1; opacity: 0.7;">(Tap anywhere to continue)</div>
+        </div>
+    </div>
+
+    <div id="loader-overlay">
+        <div class="spinner-box" id="auth-spinner"></div>
+        <div class="success-check" id="auth-success-check"><i class="fas fa-check-circle"></i></div>
+        <p id="loader-status-text" style="margin-top: 20px; font-family: 'Poppins'; font-weight: 600; color: #475569;">Verifying Credentials...</p>
+    </div>
+
+    <!-- Auth Section (Login & Register) -->
+    <div id="login-section" class="page-transition">
+        <div class="logo-container">
+            <div class="security-icon-wrapper" id="loginLogoContainer"><i data-lucide="shield-check" size="32"></i></div>
+            <div class="brand-name">PANEL SHOP</div>
+        </div>
+        <div class="login-card">
+            <h2 id="auth-title">Login</h2>
+            <p class="subtitle" id="auth-subtitle">Verify credentials to continue.</p>
+            <form id="loginForm">
+                <div class="input-group">
+                    <label>Gmail Address</label>
+                    <div class="input-wrapper"><i data-lucide="mail" size="16"></i><input type="email" id="username" class="input-field" placeholder="example@gmail.com" required></div>
+                </div>
+                <div class="input-group">
+                    <label>Password</label>
+                    <div class="input-wrapper"><i data-lucide="lock" size="16"></i><input type="password" id="password" class="input-field" placeholder="••••••••" required></div>
+                </div>
+                <button type="submit" class="sign-in-btn" id="auth-submit-btn">Log In Now <i data-lucide="arrow-right" size="16"></i></button>
+            </form>
+            <div class="auth-toggle">
+                <span id="auth-toggle-text"></span> 
+               <a id="auth-toggle-link" onclick="toggleAuthMode()"></a>
+            </div>
+        </div>
+
+        <div class="support-footer">
+            <div class="support-header-text">Support Center</div>
+            <a href="https://wa.me/8801753351700" target="_blank" class="support-card-login" id="waSupportBtn">
+                <div style="width: 38px; height: 38px; background: #0f172a; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><i data-lucide="phone" size="20" style="color: #22c55e;"></i></div>
+                <div class="support-info">
+                    <p>WhatsApp Helpline</p>
+                    <h4 id="waNumText">+8801753351700</h4>
+                </div>
+            </a>
+            <a href="https://t.me/TelegramSupport" target="_blank" class="support-card-login" id="tgSupportBtn">
+                <div style="width: 38px; height: 38px; background: #0f172a; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><i data-lucide="send" size="20" style="color: #3b82f6;"></i></div>
+                <div class="support-info">
+                    <p>Telegram Support</p>
+                    <h4 id="tgSupportText">Telegram Support</h4>
+                </div>
+            </a>
+            <a href="https://t.me/JoinOurChannel" target="_blank" class="support-card-login" id="tgChannelBtn">
+                <div style="width: 38px; height: 38px; background: #0f172a; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><i data-lucide="users" size="20" style="color: #6366f1;"></i></div>
+                <div class="support-info">
+                    <p>Telegram Channel & Group</p>
+                    <h4 id="tgChannelText">Telegram Channel</h4>
+                </div>
+            </a>
+            <div class="copyright-login">All Rights Reserved. Developed by ARIFVAI.</div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div id="user-dashboard" style="display: none;" class="page-transition">
+        <header>
+            <div class="logo-area">
+                <div class="logo-icon" id="headerLogoContainer"><i data-lucide="zap" size="18"></i></div>
+                <div class="logo-text"><h1>Panel Shop</h1><p>Reseller Panel</p></div>
+            </div>
+            <div class="menu-icon" id="openSidebar" style="cursor: pointer;"><i data-lucide="menu" size="22"></i></div>
+        </header>
+
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header"><p>Logged Account</p><h3 id="display-user">User</h3></div>
+            <ul class="menu-list">
+                <li onclick="showDashboard()"><i class="fas fa-home"></i> Dashboard Home</li>
+                <li onclick="showBuyPage()"><i class="fas fa-shopping-cart"></i> Buy New Keys</li>
+                <li onclick="showInventory()"><i class="fas fa-key"></i> Inventory Keys</li>
+                <li onclick="openDepositFromDashboard()"><i class="fas fa-wallet"></i> Add Money / Deposit</li>
+                <li onclick="logoutFunc()" style="color: #ef4444; border-bottom: none;"><i class="fas fa-sign-out-alt"></i> Logout Panel</li>
+            </ul>
+        </div>
+
+        <div class="container">
+            <div class="card">
+                <div class="profile-img"><i data-lucide="user" size="35"></i></div>
+                <div class="welcome-text"><h2 id="welcome-msg">Welcome back</h2><div class="badge-group"><span class="badge badge-active">Active</span><span class="badge badge-reseller">Reseller</span></div></div>
+            </div>
+            <div class="card wallet-card">
+                <div class="wallet-header">
+                    <div><p class="wallet-label">Available Funds</p><p class="balance">৳0.00</p></div>
+                    <i data-lucide="wallet" size="35" style="color: #6366f1; opacity: 0.8;"></i>
+                </div>
+                <button class="btn-primary" id="openAddBalance"><i data-lucide="plus-circle" size="18"></i> Add Balance</button>
+            </div>
+            <div class="card inventory-card">
+                <p class="wallet-label">My Inventory</p><p class="stat-val" id="dash-inv-count">0 Keys</p><i data-lucide="key" class="card-icon-abs" size="35"></i>
+                <button class="btn-secondary" onclick="showInventory()">Manage Inventory</button>
+            </div>
+            <div class="card get-keys-card">
+                <p class="wallet-label">New Order</p><p class="stat-val">Get Keys</p><i data-lucide="shopping-bag" class="card-icon-abs" size="35" style="color: #f59e0b;"></i>
+                <button class="btn-primary btn-warning" onclick="showBuyPage()">Buy New License</button>
+            </div>
+        </div>
+
+        <div class="support-section">
+            <h3 class="support-title">Support Center</h3>
+            <a href="https://wa.me/8801753351700" target="_blank" class="support-item" id="waDashBtn"><i data-lucide="phone-call" size="18" style="color: #22c55e;"></i><div class="support-info"><p>WhatsApp Helpline</p><h4 id="waNumDash">+8801753351700</h4></div></a>
+            <a href="https://t.me/TelegramSupport" target="_blank" class="support-item" id="tgDashBtn"><i data-lucide="send" size="18" style="color: #3b82f6;"></i><div class="support-info"><p>Telegram Support</p><h4 id="tgDashText">Telegram Support</h4></div></a>
+            <a href="https://t.me/JoinOurChannel" target="_blank" class="support-item" id="chanDashBtn"><i data-lucide="users" size="18" style="color: #6366f1;"></i><div class="support-info"><p>Telegram Channel & Group</p><h4 id="chanDashText">Telegram Channel</h4></div></a>
+        </div>
+        <footer><p>All Rights Reserved.</p><p>Developed by <span class="highlight">ARIFVAI</span></p></footer>
+
+        <!-- Deposit BDT Modal -->
+        <div class="modal-overlay" id="modalOverlay">
+            <div class="modal-card">
+                <div class="close-btn" id="closeBtn"><i class="fas fa-times"></i></div>
+                <h2>Add Balance</h2><label class="input-label">Amount (BDT)</label>
+                <input type="number" id="inputAmount" class="input-field-modal" placeholder="Min 10 BDT">
+                <button class="confirm-btn" id="confirmBtn">Confirm Payment</button>
+            </div>
+        </div>
+
+        <!-- Bkash Payment Portal UI -->
+        <div class="payment-card-ui" id="bkashUI">
+            <div class="payment-card">
+                <div class="top-bar"><span class="exit-btn" id="exitBkash">✕</span></div>
+                <div class="header-bkash">
+                    <div class="reseller-info">
+                        <div class="logo-box" id="paymentLogoBox">
+                            <i class="fas fa-shield-alt" style="color:#00d2ff; font-size:16px;"></i>
+                        </div>
+                        <div class="reseller-text"><h3>Reseller Dashboard</h3><p>Invoice ID : <b id="invoiceID">B4PNUT930726</b></p></div>
+                    </div>
+                    <img src="https://www.logo.wine/a/logo/BKash/BKash-Logo.wine.svg" alt="bKash" class="bkash-logo">
+                </div>
+                <div class="instruction-box">
+                    <h4>ট্রানজেকশন আইডি দিন</h4>
+                    <input type="text" id="trnxIDInput" class="trnx-input" placeholder="ট্রানজেকশন আইডি দিন">
+                    <ul class="steps-list">
+                        <li>*247# ডায়াল করে bKash মোবাইল মেনুতে যান অথবা bKash অ্যাপে যান।</li>
+                        <li><span class="highlight-yellow">"Send Money"</span>-এ ক্লিক করুন।</li>
+                        <li>প্রাপক নম্বর হিসেবে এই নম্বরটি লিখুন: <span class="highlight-yellow" id="paymentNumber">01753351700</span> <button class="copy-btn" id="copyNumberBtn">Copy</button></li>
+                        <li>টাকার পরিমাণ: <span class="highlight-yellow">৳<span id="finalAmount">100.00</span></span></li>
+                        <li>আপনার bKash PIN দিয়ে ট্রানজেকশনটি সম্পন্ন করুন।</li>
+                        <li>এখন উপরের বক্সে আপনার <span class="highlight-yellow">Transaction ID</span> দিন এবং নিচে <span class="highlight-yellow">VERIFY</span> বাটনে ক্লিক করুন।</li>
+                    </ul>
+                </div>
+                <button class="verify-btn" id="finalVerifyBtn">VERIFY</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Buy Keys List Page -->
+    <div id="buy-keys-page" style="display: none;" class="max-w-md mx-auto page-transition">
+        <div class="flex justify-between items-center mb-5">
+            <div class="flex items-center gap-2">
+                <i class="fas fa-shopping-bag text-xl"></i>
+                <h1 class="text-lg font-bold italic leading-tight">Buy Keys</h1>
+                <div class="ml-2 bg-[#14261a] px-2.5 py-0.5 rounded-full border border-green-900">
+                    <span class="text-xs">Balance: <span class="green-text font-bold balance" id="buy-page-balance">৳0.00</span></span>
+                </div>
+            </div>
+            <div class="relative">
+                <button id="menuBtn" class="bg-[#1e1e1e] p-2 rounded-md border border-gray-700 cursor-pointer"><i class="fas fa-bars text-lg"></i></button>
+                <div id="profileMenu" class="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-2xl z-50 overflow-hidden text-gray-800">
+                    <div class="p-3 border-b bg-gray-50"><p class="text-[9px] text-gray-400 uppercase font-bold tracking-widest">Logged Account</p><p class="text-sm font-bold text-gray-800 truncate" id="buy-page-user">User</p></div>
+                    <ul class="text-xs font-medium">
+                        <li><a href="#" onclick="showDashboard()" class="flex items-center gap-2 px-3 py-2.5 hover:bg-gray-100 border-b border-gray-100"><i class="fas fa-home text-gray-400"></i> Dashboard Home</a></li>
+                        <li><a href="#" onclick="showBuyPage()" class="flex items-center gap-2 px-3 py-2.5 hover:bg-gray-100 border-b border-gray-100 text-blue-600"><i class="fas fa-shopping-basket"></i> Buy New Keys</a></li>
+                        <li><a href="#" onclick="showInventory()" class="flex items-center gap-2 px-3 py-2.5 hover:bg-gray-100 border-b border-gray-100"><i class="fas fa-key text-gray-400"></i> Inventory Keys</a></li>
+                        <li><a href="#" onclick="openDepositFromDashboard()" class="flex items-center gap-2 px-3 py-2.5 hover:bg-gray-100 border-b border-gray-100"><i class="fas fa-money-bill-wave text-gray-400"></i> Add Money / Deposit</a></li>
+                        <li><a href="#" onclick="logoutFunc()" class="flex items-center gap-2 px-3 py-2.5 hover:bg-red-50 text-red-600"><i class="fas fa-sign-out-alt"></i> Logout Panel</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="flex items-center gap-2 mb-3 text-gray-400 text-xs"><i class="fas fa-box-open"></i><span class="font-medium">Select a Product</span></div>
+        <div class="space-y-3" id="mainProductList"></div>
+    </div>
+
+    <!-- Product Sub-Category / Pricing Page -->
+    <div id="booyah-root-section" style="display: none;" class="page-transition">
+        <div class="booyah-container">
+            <div class="header-top">
+                <div class="section-title"><i class="fas fa-key"></i> <span id="booyah-title-text">Available Keys</span></div>
+                <div class="menu-icon-booyah" onclick="toggleBooyahMenu()"><i class="fas fa-bars"></i></div>
+            </div>
+            <div class="dropdown-menu-booyah" id="menuContentBooyah">
+                <div class="user-info-booyah"><span>LOGGED ACCOUNT</span><strong class="booyah-user-display truncate">User</strong></div>
+                <a href="#" onclick="showDashboard()"><i class="fas fa-home"></i> Dashboard Home</a>
+                <a href="#" onclick="showBuyPage()"><i class="fas fa-shopping-bag"></i> Buy New Keys</a>
+                <a href="#" onclick="showInventory()"><i class="fas fa-key"></i> Inventory Keys</a>
+                <a href="#" onclick="openDepositFromDashboard()"><i class="fas fa-wallet"></i> Add Money / Deposit</a>
+                <a href="#" onclick="logoutFunc()" style="color: #ff4757;"><i class="fas fa-sign-out-alt"></i> Logout Panel</a>
+            </div>
+            <div id="booyah-price-list"></div>
+        </div>
+    </div>
+
+    <!-- Inventory Section -->
+    <div id="inventory-page" style="display: none;" class="page-transition">
+        <div class="header-inv">
+            <div class="header-left-inv"><i class="fa-solid fa-key" style="font-size:18px; color:#3b82f6;"></i><h1>My Keys</h1><span class="keys-badge-inv" id="inv-count-badge">0 Keys</span></div>
+            <button class="menu-btn" onclick="toggleInvMenu()" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;"><i class="fa-solid fa-bars"></i></button>
+        </div>
+
+        <div class="dropdown-menu-inv" id="dropdown-inv">
+            <div class="dropdown-header-inv"><p>Logged Account</p><h3 class="inv-user-display truncate">User</h3></div>
+            <a href="#" class="dropdown-item-inv" onclick="showDashboard()"><i class="fa-solid fa-house"></i> Dashboard Home</a>
+            <a href="#" class="dropdown-item-inv" onclick="showBuyPage()"><i class="fa-solid fa-bag-shopping"></i> Buy New Keys</a>
+            <a href="#" class="dropdown-item-inv" onclick="showInventory()"><i class="fa-solid fa-key"></i> Inventory Keys</a>
+            <a href="#" class="dropdown-item-inv" onclick="openDepositFromDashboard()"><i class="fa-solid fa-circle-dollar-to-slot"></i> Add Money / Deposit</a>
+            <a href="#" class="dropdown-item-inv" onclick="logoutFunc()" style="color: #e11d48;"><i class="fa-solid fa-right-from-bracket"></i> Logout Panel</a>
+        </div>
+
+        <div class="empty-card-inv" id="empty-inventory-state">
+            <div class="key-icon-large-inv"><i class="fa-solid fa-key"></i></div>
+            <p class="empty-text-inv">No keys purchased yet</p>
+        </div>
+
+        <div class="table-wrapper" id="inventory-table-wrapper" style="display: none;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Duration</th>
+                        <th>Key Code</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody id="key-table-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Purchase Confirmation Dialog Modal -->
+    <div class="purchase-modal-overlay" id="purchaseModalOverlay">
+        <div class="modal-custom">
+            <div class="close-btn-custom" id="closePurchaseModal"><i class="fas fa-times"></i></div>
+            <div class="header-custom"><i class="fas fa-shopping-cart"></i><span>Select Quantity</span></div>
+            <div class="product-info-custom">
+                <div class="product-title-custom" id="p_modal_title">PRODUCT NAME</div>
+                <div class="badge-custom" id="p_modal_duration">7 DAYS</div>
+            </div>
+            <div class="quantity-selector-custom">
+                <button class="q-btn-custom" id="q-minus">-</button>
+                <input type="text" class="q-input-custom" value="1" id="q-val" readonly>
+                <button class="q-btn-custom" id="q-plus">+</button>
+            </div>
+            <div class="price-container-custom">
+                <div><div class="price-label-custom">Price per key:</div><div class="price-value-custom" id="p_modal_price">৳ 0.00</div></div>
+                <div style="text-align: right;"><div class="price-label-custom">Total:</div><div class="total-value-custom" id="p_modal_total">৳ 0.00</div></div>
+            </div>
+            <div class="footer-buttons-custom">
+                <button class="btn-custom btn-cancel-custom" id="cancelPurchase">Cancel</button>
+                <button class="btn-custom btn-confirm-custom" id="confirmPurchaseBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LUCKY SPIN WHEEL MODAL -->
+    <div id="spinModalOverlay" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[100000] flex items-center justify-center p-4" style="display: none;">
+        <div class="glass-box rounded-3xl p-6 md:p-8 flex flex-col items-center justify-center max-w-md w-full relative text-white">
+            <div style="position: absolute; right: 20px; top: 20px; font-size: 20px; cursor: pointer; color: #aaa;" onclick="closeSpinModal()"><i class="fas fa-times"></i></div>
+            <h3 class="text-xl font-bold text-yellow-400 mb-1">Lucky Spin Wheel</h3>
+            <p class="text-xs text-gray-300 mb-4">Spin & Win Rewards!</p>
+            
+            <div class="relative w-64 h-64 sm:w-72 sm:h-72 flex items-center justify-center wheel-outer-shadow mb-6">
+                <div class="absolute -top-3 z-30 pointer-shadow">
+                    <svg width="36" height="46" viewBox="0 0 44 54" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M22 54L0 12L22 0L44 12L22 54Z" fill="#FFF49C"/>
+                        <path d="M22 46L5 13L22 4L39 13L22 46Z" fill="#FFC700"/>
+                        <path d="M22 46L22 4L39 13L22 46Z" fill="#E59900"/>
+                    </svg>
+                </div>
+                <canvas id="wheelCanvas" width="500" height="500" class="w-full h-full cursor-pointer"></canvas>
+                <div class="absolute z-20 pointer-events-none w-14 h-14 rounded-full flex items-center justify-center"
+                     style="background: radial-gradient(circle at 35% 35%, #ca8a04 0%, #ca8a04 100%); padding: 3px; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
+                    <div class="w-full h-full rounded-full relative flex items-center justify-center" style="background: radial-gradient(circle at 35% 35%, #c084fc 0%, #7e22ce 70%, #581c87 100%); border: 2px solid #fef08a;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="text-white opacity-90 drop-shadow">
+                            <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z" fill="white"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <button id="spinBtn" class="spin-btn w-56 py-3 rounded-full text-white font-extrabold text-xl tracking-wider uppercase flex items-center justify-center gap-2 border-2 border-white/60">
+                <span>✦</span>
+                <span id="spinBtnText">SPIN</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Result Modal Inside Spin -->
+    <div id="resultModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100001] flex items-center justify-center hidden opacity-0 transition-opacity duration-300 p-4">
+        <div class="bg-white rounded-3xl p-6 max-w-xs w-full text-center shadow-2xl transform scale-90 transition-transform duration-300 text-gray-800" id="modalCard">
+            <h3 class="text-gray-400 font-bold uppercase text-xs tracking-wider mb-2">You Won:</h3>
+            <div id="resultText" class="text-2xl font-extrabold text-purple-700 mb-5">Result</div>
+            <button onclick="closeResultModal()" class="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-lg transition text-sm">OK, GOT IT!</button>
+        </div>
+    </div>
+
+    <!-- SPIN WHEEL FLOATING BUTTON -->
+    <div id="spin-fab" onclick="openSpinModal()">
+        <i class="fas fa-dharmachakra"></i>
+    </div>
+
+    <!-- AI Floating Bot Elements -->
+    <div id="ai-fab" onclick="toggleAiChat()">
+        <i class="fas fa-robot"></i>
+    </div>
+
+    <div id="ai-chat-window">
+        <div class="ai-header">
+            <div class="ai-profile">
+                <div class="ai-avatar"><i class="fas fa-robot" style="font-size: 16px;"></i></div>
+                <div class="ai-title">
+                    <h4>PANEL SHOP AI</h4>
+                    <span class="ai-status">Online</span>
+                </div>
+            </div>
+            <button class="ai-close" onclick="toggleAiChat()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="ai-messages" id="aiMessagesContainer">
+            <div class="ai-msg bot">হ্যালো! আমি PANEL SHOP AI। প্যানেল শপ রিসেলার প্যানেল সম্পর্কিত যেকোনো বিষয়ে সাহায্য করতে পারি। বলুন কী জানতে চান? 😊</div>
+        </div>
+        <div class="ai-input-area">
+            <input type="text" id="aiUserInput" class="ai-input-field" placeholder="Type a message..." onkeypress="handleAiKeyPress(event)">
+            <button class="ai-send-btn" onclick="sendAiMessage()"><i class="fas fa-paper-plane" style="font-size: 12px;"></i></button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+        import { getDatabase, ref, set, push, onValue, update, get } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBobqG60zFz9fUsyhg5pnX5I08y68fX01Y",
+            authDomain: "panelshop-76af2.firebaseapp.com",
+            databaseURL: "https://panelshop-76af2-default-rtdb.firebaseio.com",
+            projectId: "panelshop-76af2",
+            storageBucket: "panelshop-76af2.firebasestorage.app",
+            messagingSenderId: "551575574193",
+            appId: "1:551575574193:web:0dc9119ec24c678262f490"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const database = getDatabase(app);
+
+        lucide.createIcons();
+
+        // Helper function to show Animated Toast Popup for Login Success / Error
+        function showAuthToast(type, message) {
+            const toast = document.getElementById('auth-toast');
+            const icon = document.getElementById('toast-icon');
+            const msg = document.getElementById('toast-message');
+
+            toast.className = '';
+            if (type === 'success') {
+                toast.classList.add('success');
+                icon.className = 'fas fa-check-circle';
+            } else {
+                toast.classList.add('error');
+                icon.className = 'fas fa-exclamation-triangle';
+            }
+
+            msg.innerText = message;
+            toast.classList.add('show');
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3500);
+        }
+
+        const flowerContainer = document.getElementById('flowerContainer');
+        let isAnimationEnabled = true;
+
+        function renderFlowers() {
+            flowerContainer.innerHTML = '';
+            if (!isAnimationEnabled) return;
+            
+            const flowerIcons = ['🌸', '🌺', '🌹', '🌷', '🌼', '✨'];
+            for(let i=0; i<25; i++) {
+                const f = document.createElement('div');
+                f.className = 'flower';
+                f.innerText = flowerIcons[Math.floor(Math.random() * flowerIcons.length)];
+                f.style.left = Math.random() * 100 + 'vw';
+                f.style.animationDuration = (Math.random() * 4 + 4) + 's';
+                f.style.animationDelay = (Math.random() * 5) + 's';
+                f.style.fontSize = (Math.random() * 14 + 16) + 'px';
+                flowerContainer.appendChild(f);
+            }
+        }
+        renderFlowers();
+
+        let splashTimer = setTimeout(() => {
+            dismissSplashScreen();
+        }, 10000);
+
+        window.dismissSplashScreen = () => {
+            clearTimeout(splashTimer);
+            const splash = document.getElementById('splash-screen');
+            if(splash) {
+                splash.style.opacity = '0';
+                setTimeout(() => splash.style.display = 'none', 500);
+            }
+        };
+
+        let isRegisterMode = false;
+        let currentUnitPrice = 0;
+        let currentPKey = "";
+        let currentPName = "";
+        let currentPDuration = "";
+        let userBalance = 0;
+        let userSpinCount = 0;
+        let currentWhatsAppNumber = "+8801753351700";
+        let adminForcedWin = ""; // Admin controlled fixed winning prize
+
+        let options = [
+            { text: "৳10 Bonus", bgGradient: ["#ff6584", "#f43f5e"] },
+            { text: "Try Again", bgGradient: ["#ff9843", "#ea580c"] },
+            { text: "৳20 Bonus", bgGradient: ["#facc15", "#eab308"] },
+            { text: "৳50 Bonus", bgGradient: ["#84cc16", "#65a30d"] },
+            { text: "Better Luck", bgGradient: ["#14b8a6", "#0d9488"] },
+            { text: "৳5 Bonus", bgGradient: ["#38bdf8", "#0284c7"] }
+        ];
+
+        // Fetch Spin Wheel Options, Animations Control and Admin Fixed Win setting from Firebase
+        function loadSpinWheelOptions() {
+            onValue(ref(database, 'spinWheelOptions'), (snapshot) => {
+                if (snapshot.exists()) {
+                    let customOptions = [];
+                    snapshot.forEach(childSnap => {
+                        const item = childSnap.val();
+                        if(item && item.text) {
+                            customOptions.push({
+                                text: item.text,
+                                bgGradient: item.colors || ["#6366f1", "#4f46e5"]
+                            });
+                        }
+                    });
+                    if(customOptions.length > 0) {
+                        options = customOptions;
+                    }
+                }
+            });
+
+            // Admin Animation Control Sync
+            onValue(ref(database, 'appSettings/animationsEnabled'), (snapshot) => {
+                if (snapshot.exists()) {
+                    isAnimationEnabled = snapshot.val() !== false;
+                    const animatedElems = document.querySelectorAll('.page-transition');
+                    animatedElems.forEach(el => {
+                        if (!isAnimationEnabled) {
+                            el.classList.add('no-animation');
+                        } else {
+                            el.classList.remove('no-animation');
+                        }
+                    });
+                    renderFlowers();
+                }
+            });
+
+            // Listen to Admin Controlled Fixed Winning Reward
+            onValue(ref(database, 'adminSettings/forcedSpinWin'), (snapshot) => {
+                if (snapshot.exists()) {
+                    adminForcedWin = snapshot.val(); 
+                } else {
+                    adminForcedWin = "";
+                }
+            });
+        }
+        loadSpinWheelOptions();
+
+        let audioCtx = null;
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playTickSound() {
+            try {
+                initAudio();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.04);
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.04);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.04);
+            } catch(e) {}
+        }
+
+        function playWinSound() {
+            try {
+                initAudio();
+                const notes = [400, 500, 600, 800];
+                notes.forEach((freq, index) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.value = freq;
+                    const startTime = audioCtx.currentTime + index * 0.1;
+                    gain.gain.setValueAtTime(0.2, startTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.3);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(startTime);
+                    osc.stop(startTime + 0.3);
+                });
+            } catch(e) {}
+        }
+
+        const canvas = document.getElementById('wheelCanvas');
+        const ctx = canvas.getContext('2d');
+        const spinBtn = document.getElementById('spinBtn');
+        const spinBtnText = document.getElementById('spinBtnText');
+        
+        let currentRotation = 0;
+        let isSpinningWheel = false;
+        let lastSegmentIndex = -1;
+
+        function drawWheel() {
+            if(!canvas) return;
+            const width = canvas.width;
+            const height = canvas.height;
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const outerRadius = 220;
+
+            const numOptions = options.length;
+            const arcSize = (2 * Math.PI) / numOptions;
+
+            ctx.clearRect(0, 0, width, height);
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.rotate(currentRotation);
+
+            ctx.beginPath();
+            ctx.arc(0, 0, outerRadius + 22, 0, 2 * Math.PI);
+            ctx.fillStyle = '#6b21a8';
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(0, 0, outerRadius + 2, 0, 2 * Math.PI);
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = '#e9d5ff';
+            ctx.stroke();
+
+            for (let i = 0; i < numOptions; i++) {
+                const angle = i * arcSize;
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.arc(0, 0, outerRadius, angle, angle + arcSize);
+                ctx.closePath();
+
+                const midAngle = angle + arcSize / 2;
+                const gx = Math.cos(midAngle) * outerRadius;
+                const gy = Math.sin(midAngle) * outerRadius;
+                const grad = ctx.createLinearGradient(0, 0, gx, gy);
+                grad.addColorStop(0, options[i].bgGradient[0]);
+                grad.addColorStop(1, options[i].bgGradient[1]);
+                
+                ctx.fillStyle = grad;
+                ctx.fill();
+                
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+                ctx.stroke();
+
+                ctx.save();
+                ctx.rotate(angle + arcSize / 2);
+                ctx.textAlign = "right";
+                ctx.fillStyle = "#ffffff";
+                ctx.font = "bold 20px 'Fredoka', sans-serif";
+                ctx.shadowColor = "rgba(0, 0, 0, 0.4)";
+                ctx.shadowBlur = 4;
+                ctx.shadowOffsetX = 2;
+                ctx.shadowOffsetY = 2;
+                ctx.fillText(options[i].text, outerRadius - 25, 8);
+                ctx.restore();
+            }
+
+            const numStuds = 12;
+            for (let i = 0; i < numStuds; i++) {
+                const studAngle = (i * 2 * Math.PI) / numStuds;
+                const sx = Math.cos(studAngle) * (outerRadius + 12);
+                const sy = Math.sin(studAngle) * (outerRadius + 12);
+
+                ctx.beginPath();
+                ctx.arc(sx, sy, 7, 0, 2 * Math.PI);
+                const goldGrad = ctx.createRadialGradient(sx - 2, sy - 2, 1, sx, sy, 7);
+                goldGrad.addColorStop(0, '#fef08a');
+                goldGrad.addColorStop(0.7, '#eab308');
+                goldGrad.addColorStop(1, '#854d0e');
+                ctx.fillStyle = goldGrad;
+                ctx.fill();
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = '#fef9c3';
+                ctx.stroke();
+            }
+            ctx.restore();
+        }
+
+        async function spinWheelAction() {
+            if (isSpinningWheel) return;
+            if (userSpinCount <= 0) {
+                alert("আপনার কোনো স্পিন অবশিষ্ট নেই!");
+                return;
+            }
+
+            isSpinningWheel = true;
+            spinBtn.disabled = true;
+
+            const numOptions = options.length;
+            const arcSize = (2 * Math.PI) / numOptions;
+
+            let targetSegmentIndex = 0;
+
+            if (adminForcedWin && adminForcedWin.trim() !== "") {
+                const foundIndex = options.findIndex(opt => opt.text.toLowerCase() === adminForcedWin.toLowerCase());
+                if (foundIndex !== -1) {
+                    targetSegmentIndex = foundIndex;
+                } else {
+                    targetSegmentIndex = Math.floor(Math.random() * numOptions);
+                }
+            } else {
+                targetSegmentIndex = Math.floor(Math.random() * numOptions);
+            }
+
+            const extraSpins = 5 + Math.floor(Math.random() * 3);
+            const segmentCenterAngle = (targetSegmentIndex * arcSize) + (arcSize / 2);
+            const desiredNormalizedAngle = (3 * Math.PI / 2 - segmentCenterAngle + 2 * Math.PI) % (2 * Math.PI);
+            
+            const currentMod = currentRotation % (2 * Math.PI);
+            let angleDifference = desiredNormalizedAngle - currentMod;
+            if (angleDifference < 0) angleDifference += (2 * Math.PI);
+
+            const targetRotation = currentRotation + (extraSpins * 2 * Math.PI) + angleDifference;
+
+            const startRotation = currentRotation;
+            const totalChange = targetRotation - startRotation;
+            const duration = 5000;
+            let startTime = null;
+
+            function easeOutCubic(t) {
+                return 1 - Math.pow(1 - t, 3);
+            }
+
+            function animate(timestamp) {
+                if (!startTime) startTime = timestamp;
+                const elapsed = timestamp - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+
+                const easedProgress = easeOutCubic(progress);
+                currentRotation = startRotation + totalChange * easedProgress;
+
+                const normalizedAngle = (2.5 * Math.PI - (currentRotation % (Math.PI * 2)) + (2 * Math.PI)) % (Math.PI * 2);
+                const currentSegment = Math.floor(normalizedAngle / arcSize) % numOptions;
+                
+                if (currentSegment !== lastSegmentIndex) {
+                    playTickSound();
+                    lastSegmentIndex = currentSegment;
+                }
+
+                drawWheel();
+
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    isSpinningWheel = false;
+                    playWinSound();
+                    
+                    const winningOption = options[targetSegmentIndex];
+                    handleSpinReward(winningOption.text);
+                }
+            }
+            requestAnimationFrame(animate);
+        }
+
+        async function handleSpinReward(rewardText) {
+            if (!auth.currentUser) return;
+
+            let newSpinCount = userSpinCount > 0 ? userSpinCount - 1 : 0;
+            let updates = { spinCount: newSpinCount };
+
+            let wonAmount = 0;
+            const match = rewardText.match(/৳\s*(\d+)/);
+            if (match && match[1]) {
+                wonAmount = parseFloat(match[1]);
+            }
+
+            if (wonAmount > 0) {
+                const newBalance = userBalance + wonAmount;
+                updates.balance = newBalance;
+            }
+
+            try {
+                await update(ref(database, 'users/' + auth.currentUser.uid), updates);
+            } catch(e) {
+                console.error("Error updating spin reward: ", e);
+            }
+
+            updateSpinBtnUI(newSpinCount);
+            showResultModal(rewardText);
+        }
+
+        function updateSpinBtnUI(count) {
+            if (count > 0) {
+                spinBtn.disabled = false;
+                if (spinBtnText) spinBtnText.innerText = `SPIN (${count})`;
+            } else {
+                spinBtn.disabled = true;
+                if (spinBtnText) spinBtnText.innerText = "0 Spins Left";
+            }
+        }
+
+        window.openSpinModal = () => {
+            document.getElementById('spinModalOverlay').style.display = 'flex';
+            updateSpinBtnUI(userSpinCount);
+            setTimeout(drawWheel, 50);
+        };
+
+        window.closeSpinModal = () => {
+            document.getElementById('spinModalOverlay').style.display = 'none';
+        };
+
+        function showResultModal(text) {
+            document.getElementById('resultText').innerText = text;
+            const resModal = document.getElementById('resultModal');
+            const resCard = document.getElementById('modalCard');
+            resModal.classList.remove('hidden');
+            setTimeout(() => {
+                resModal.classList.remove('opacity-0');
+                resCard.classList.remove('scale-90');
+                resCard.classList.add('scale-100');
+            }, 10);
+        }
+
+        window.closeResultModal = () => {
+            const resModal = document.getElementById('resultModal');
+            const resCard = document.getElementById('modalCard');
+            resModal.classList.add('opacity-0');
+            resCard.classList.remove('scale-100');
+            resCard.classList.add('scale-90');
+            setTimeout(() => {
+                resModal.classList.add('hidden');
+            }, 300);
+        };
+
+        if(spinBtn) {
+            spinBtn.addEventListener('click', spinWheelAction);
+        }
+
+        function loadAppSettings() {
+            onValue(ref(database, 'appSettings'), (snapshot) => {
+                let waNum = "+8801753351700";
+                let tgSupp = "Telegram Support";
+                let tgChan = "Telegram Channel";
+                let customLogoUrl = "";
+                let splashTitle = "السَّلَامُ عَلَيْكُمْ، كَيْفَ حَالُكُمْ جَمِيعًا؟";
+                let splashSub = "Welcome to Panel Shop";
+
+                if (snapshot.exists()) {
+                    const settings = snapshot.val();
+                    if(settings.whatsappNumber) waNum = settings.whatsappNumber;
+                    if(settings.telegramSupport) tgSupp = settings.telegramSupport;
+                    if(settings.telegramChannel) tgChan = settings.telegramChannel;
+                    if(settings.logoUrl) customLogoUrl = settings.logoUrl; 
+                    if(settings.splashTitle) splashTitle = settings.splashTitle; 
+                    if(settings.splashSub) splashSub = settings.splashSub; 
+                    
+                    if(document.getElementById('paymentNumber')) {
+                        document.getElementById('paymentNumber').innerText = settings.bkashNumber || waNum.replace(/[^0-9]/g, '');
+                    }
+                }
+                
+                if(document.getElementById('splashTitleText')) {
+                    document.getElementById('splashTitleText').innerText = splashTitle;
+                }
+                if(document.getElementById('splashSubText')) {
+                    document.getElementById('splashSubText').innerText = splashSub;
+                }
+
+                const loginLogoContainer = document.getElementById('loginLogoContainer');
+                const headerLogoContainer = document.getElementById('headerLogoContainer');
+                const paymentLogoBox = document.getElementById('paymentLogoBox');
+
+                if(customLogoUrl) {
+                    if(loginLogoContainer) loginLogoContainer.innerHTML = `<img src="${customLogoUrl}" alt="Logo">`;
+                    if(headerLogoContainer) headerLogoContainer.innerHTML = `<img src="${customLogoUrl}" alt="Logo">`;
+                    if(paymentLogoBox) paymentLogoBox.innerHTML = `<img src="${customLogoUrl}" alt="Logo">`;
+                } else {
+                    if(loginLogoContainer) loginLogoContainer.innerHTML = `<i data-lucide="shield-check" size="32"></i>`;
+                    if(headerLogoContainer) headerLogoContainer.innerHTML = `<i data-lucide="zap" size="18"></i>`;
+                    if(paymentLogoBox) paymentLogoBox.innerHTML = `<i class="fas fa-shield-alt" style="color:#00d2ff; font-size:16px;"></i>`;
+                }
+
+                currentWhatsAppNumber = waNum;
+                const cleanWaNum = waNum.replace(/[^0-9]/g, '');
+                const waLink = "https://wa.me/" + cleanWaNum;
+                document.querySelectorAll('#waSupportBtn, #waDashBtn').forEach(el => el.href = waLink);
+                document.querySelectorAll('#waNumText, #waNumDash').forEach(el => el.innerText = waNum.startsWith('+') ? waNum : '+' + waNum);
+
+                const tgSuppLink = tgSupp.startsWith('http') ? tgSupp : "https://t.me/" + tgSupp.replace('@', '');
+                document.querySelectorAll('#tgSupportBtn, #tgDashBtn').forEach(el => el.href = tgSuppLink);
+                document.querySelectorAll('#tgSupportText, #tgDashText').forEach(el => el.innerText = tgSupp);
+
+                const tgChanLink = tgChan.startsWith('http') ? tgChan : "https://t.me/" + tgChan.replace('@', '');
+                document.querySelectorAll('#tgChannelBtn, #chanDashBtn').forEach(el => el.href = tgChanLink);
+                document.querySelectorAll('#tgChannelText, #chanDashText').forEach(el => el.innerText = tgChan);
+
+                lucide.createIcons();
+            });
+        }
+
+        loadAppSettings();
+
+        window.toggleAuthMode = () => {
+            isRegisterMode = !isRegisterMode;
+            document.getElementById('auth-title').innerText = isRegisterMode ? "Sign Up" : "Login";
+            document.getElementById('auth-subtitle').innerText = isRegisterMode ? "Create a reseller account." : "Verify credentials to continue.";
+            document.getElementById('auth-submit-btn').innerHTML = isRegisterMode ? 'Create Account <i data-lucide="arrow-right" size="16"></i>' : 'Log In Now <i data-lucide="arrow-right" size="16"></i>';
+            document.getElementById('auth-toggle-text').innerText = isRegisterMode ? "Already have an account?" : "";
+            document.getElementById('auth-toggle-link').innerText = isRegisterMode ? "Log In Now" : "Register Now";
+            lucide.createIcons();
+        };
+
+        window.copyGeneral = (text, btnElement) => {
+            navigator.clipboard.writeText(text).then(() => {
+                const originalHTML = btnElement.innerHTML;
+                btnElement.innerText = 'Copied!';
+                setTimeout(() => { btnElement.innerHTML = originalHTML; }, 2000);
+            });
+        };
+
+        window.copyKey = (text, btn) => {
+            navigator.clipboard.writeText(text).then(() => {
+                const original = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied';
+                btn.style.backgroundColor = '#22c55e';
+                setTimeout(() => { btn.innerHTML = original; btn.style.backgroundColor = '#333'; }, 2000);
+            });
+        };
+
+        const loginSec = document.getElementById('login-section');
+        const dashSec = document.getElementById('user-dashboard');
+        const buySec = document.getElementById('buy-keys-page');
+        const booyahSec = document.getElementById('booyah-root-section');
+        const invSec = document.getElementById('inventory-page');
+        const sidebar = document.getElementById('sidebar');
+        const sideOverlay = document.getElementById('sidebarOverlay');
+        const purchaseModal = document.getElementById('purchaseModalOverlay');
+        const aiFab = document.getElementById('ai-fab');
+        const spinFab = document.getElementById('spin-fab');
+
+        function switchView(targetSec) {
+            [loginSec, dashSec, buySec, booyahSec, invSec].forEach(s => {
+                s.style.display = 'none';
+                s.classList.remove('page-transition');
+            });
+            targetSec.style.display = 'block';
+            void targetSec.offsetWidth;
+            if(isAnimationEnabled) {
+                targetSec.classList.add('page-transition');
+            }
+            sidebar.classList.remove('active');
+            sideOverlay.style.display = 'none';
+        }
+
+        window.showDashboard = () => switchView(dashSec);
+        window.showBuyPage = () => switchView(buySec);
+        window.showInventory = () => {
+            switchView(invSec);
+            loadUserKeys();
+        }
+
+        window.openDepositFromDashboard = () => {
+            switchView(dashSec);
+            document.getElementById('modalOverlay').style.display = "flex";
+        }
+
+        window.openBooyahRoot = (pKey, productName) => {
+            switchView(booyahSec);
+            document.getElementById('booyah-title-text').innerText = productName;
+            loadBooyahKeys(pKey, productName);
+        }
+
+        window.toggleInvMenu = () => {
+            if(window.event) window.event.stopPropagation();
+            document.getElementById('dropdown-inv').classList.toggle('active');
+        }
+
+        window.toggleBooyahMenu = () => {
+            if(window.event) window.event.stopPropagation();
+            document.getElementById("menuContentBooyah").classList.toggle("show");
+        }
+
+        window.logoutFunc = () => signOut(auth).then(() => location.reload());
+
+        function loadUserKeys() {
+            const listContainer = document.getElementById('key-table-body');
+            const emptyState = document.getElementById('empty-inventory-state');
+            const tableWrapper = document.getElementById('inventory-table-wrapper');
+            const invBadge = document.getElementById('inv-count-badge');
+            const dashBadge = document.getElementById('dash-inv-count');
+            
+            if (!auth.currentUser) return;
+
+            onValue(ref(database, 'users/' + auth.currentUser.uid + '/activeKeys'), (snapshot) => {
+                listContainer.innerHTML = "";
+                if (snapshot.exists()) {
+                    emptyState.style.display = 'none';
+                    tableWrapper.style.display = 'block';
+                    let count = 0;
+                    snapshot.forEach(child => {
+                        const data = child.val();
+                        count++;
+                        const dateStr = data.addedOn ? new Date(data.addedOn).toLocaleDateString() : new Date().toLocaleDateString();
+                        const displayKey = data.keyCode || "N/A";
+                        const displayProduct = data.productName || "Unknown";
+                        const displayDuration = data.duration || "N/A";
+
+                        listContainer.innerHTML += `
+                            <tr>
+                                <td style="font-weight: bold; text-transform: uppercase;">${displayProduct}</td>
+                                <td><span style="background: rgba(34, 197, 94, 0.15); color: #22c55e; padding: 3px 8px; border-radius: 5px; font-size: 10px; font-weight: bold;">${displayDuration}</span></td>
+                                <td>
+                                    <div style="background: #000; border: 1px dashed #333; padding: 4px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px;">
+                                        <span style="font-family: monospace; color: #4ade80; font-weight: bold; font-size: 13px;">${displayKey}</span>
+                                        <button class="copy-btn-action" onclick="copyKey('${displayKey}', this)" style="background: #333; color: white; border: none; padding: 3px 6px; border-radius: 4px; font-size: 10px; cursor: pointer;">Copy</button>
+                                    </div>
+                                </td>
+                                <td style="color: #a3a3a3; font-size: 11px;">${dateStr}</td>
+                            </tr>
+                        `;
+                    });
+                    if(invBadge) invBadge.innerText = count + " Keys";
+                    if(dashBadge) dashBadge.innerText = count + " Keys";
+                } else {
+                    emptyState.style.display = 'flex';
+                    tableWrapper.style.display = 'none';
+                    if(invBadge) invBadge.innerText = "0 Keys";
+                    if(dashBadge) dashBadge.innerText = "0 Keys";
+                }
+            });
+        }
+
+        function loadBooyahKeys(pKey, productName) {
+            const listContainer = document.getElementById('booyah-price-list');
+            onValue(ref(database, 'products/' + pKey + '/prices'), (snapshot) => {
+                listContainer.innerHTML = "";
+                if(snapshot.exists()) {
+                    const p = snapshot.val();
+                    const durations = [
+                        { key: 'day1', label: '1 DAY' },
+                        { key: 'day3', label: '3 DAYS' },
+                        { key: 'day7', label: '7 DAYS' },
+                        { key: 'day15', label: '15 DAYS' },
+                        { key: 'day30', label: '30 DAYS' }
+                    ];
+
+                    let activeCount = 0;
+                    durations.forEach(item => {
+                        if(p[item.key] && p[item.key] > 0 && p[item.key + '_status'] !== 'inactive') {
+                            activeCount++;
+                            listContainer.innerHTML += `
+                                <div class="card-booyah">
+                                    <h3>${productName}</h3>
+                                    <div class="duration-badge">${item.label}</div>
+                                    <span class="price-booyah">৳ ${p[item.key]}</span>
+                                    <button class="buy-btn-booyah" onclick="processPurchase('${pKey}', '${productName}', '${item.label}', ${p[item.key]})">
+                                        <i class="fas fa-shopping-cart"></i> Buy Now
+                                    </button>
+                                </div>`;
+                        }
+                    });
+
+                    if(activeCount === 0) {
+                        listContainer.innerHTML = `<p class="text-center text-gray-500 py-6 text-xs">No active packages available for this product.</p>`;
+                    }
+                } else {
+                    listContainer.innerHTML = `<p class="text-center text-gray-500 py-6 text-xs">No pricing configured for this item.</p>`;
+                }
+            });
+        }
+
+        window.processPurchase = (pKey, name, duration, price) => {
+            currentPKey = pKey;
+            currentPName = name; 
+            currentPDuration = duration; 
+            currentUnitPrice = price;
+            
+            document.getElementById('p_modal_title').innerText = name;
+            document.getElementById('p_modal_duration').innerText = duration;
+            document.getElementById('p_modal_price').innerText = "৳ " + price.toFixed(2);
+            document.getElementById('q-val').value = 1;
+            updateTotal();
+            purchaseModal.style.display = 'flex';
+        };
+
+        function updateTotal() {
+            const q = parseInt(document.getElementById('q-val').value);
+            document.getElementById('p_modal_total').innerText = "৳ " + (q * currentUnitPrice).toFixed(2);
+        }
+
+        document.getElementById('q-plus').onclick = () => { document.getElementById('q-val').value = parseInt(document.getElementById('q-val').value) + 1; updateTotal(); };
+        document.getElementById('q-minus').onclick = () => { let v = parseInt(document.getElementById('q-val').value); if(v > 1) { document.getElementById('q-val').value = v - 1; updateTotal(); } };
+        document.getElementById('closePurchaseModal').onclick = () => purchaseModal.style.display = 'none';
+        document.getElementById('cancelPurchase').onclick = () => purchaseModal.style.display = 'none';
+
+        document.getElementById('confirmPurchaseBtn').onclick = async () => {
+            const qty = parseInt(document.getElementById('q-val').value);
+            const totalCost = qty * currentUnitPrice;
+
+            if (userBalance < totalCost) {
+                alert("Insufficient funds! Please add balance first.");
+                return;
+            }
+
+            const keyRef = ref(database, `stockKeys/${currentPKey}/${currentPDuration.replace(' ', '_')}`);
+            const snapshot = await get(keyRef);
+            
+            let availableKeys = [];
+            if (snapshot.exists()) {
+                snapshot.forEach(child => {
+                    availableKeys.push({ keyId: child.key, value: child.val().code });
+                });
+            }
+
+            if (availableKeys.length < qty) {
+                if (confirm(`Stock insufficient for instant delivery. Do you want to submit an Order Request to Admin for ${qty} key(s) (${currentPName} - ${currentPDuration})? Cost: ৳${totalCost}`)) {
+                    const updatedBalance = userBalance - totalCost;
+                    await update(ref(database, 'users/' + auth.currentUser.uid), { balance: updatedBalance });
+
+                    await push(ref(database, 'orderRequests'), {
+                        uid: auth.currentUser.uid,
+                        email: auth.currentUser.email,
+                        productName: currentPName,
+                        duration: currentPDuration,
+                        quantity: qty,
+                        totalAmount: totalCost,
+                        status: "pending",
+                        timestamp: Date.now()
+                    });
+
+                    alert("Order request submitted successfully to Admin! Funds deducted. Admin will review and provide keys soon.");
+                    purchaseModal.style.display = 'none';
+                    showDashboard();
+                }
+                return;
+            }
+
+            if (confirm(`Confirm purchase of ${qty} key(s) for ৳${totalCost}?`)) {
+                const updatedBalance = userBalance - totalCost;
+                await update(ref(database, 'users/' + auth.currentUser.uid), { balance: updatedBalance });
+
+                for (let i = 0; i < qty; i++) {
+                    const assignedKey = availableKeys[i];
+                    await push(ref(database, 'users/' + auth.currentUser.uid + '/activeKeys'), {
+                        productName: currentPName,
+                        duration: currentPDuration,
+                        keyCode: assignedKey.value,
+                        addedOn: Date.now()
+                    });
+                    await set(ref(database, `stockKeys/${currentPKey}/${currentPDuration.replace(' ', '_')}/${assignedKey.keyId}`), null);
+                }
+
+                alert("Purchase successful! Keys are available in your inventory.");
+                purchaseModal.style.display = 'none';
+                showInventory();
+            }
+        };
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                aiFab.style.display = 'flex';
+                
+                onValue(ref(database, 'users/' + user.uid), (snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
+                        userBalance = data.balance || 0;
+                        userSpinCount = data.spinCount || 0;
+
+                        document.querySelectorAll('.balance').forEach(el => el.innerText = "৳" + userBalance.toFixed(2));
+                        
+                        if (userSpinCount > 0 || data.canSpin === true) {
+                            spinFab.style.display = 'flex';
+                        } else {
+                            spinFab.style.display = 'none';
+                        }
+                        
+                        updateSpinBtnUI(userSpinCount);
+                    }
+                });
+
+                get(ref(database, 'users/' + user.uid)).then(snap => {
+                    if(!snap.exists()) {
+                        set(ref(database, 'users/' + user.uid), {
+                            email: user.email,
+                            balance: 0,
+                            spinCount: 0,
+                            canSpin: false,
+                            createdAt: Date.now()
+                        });
+                    }
+                });
+
+                const uName = user.email.split('@')[0];
+                document.querySelectorAll('#display-user, #buy-page-user, .inv-user-display, .booyah-user-display').forEach(el => el.innerText = uName);
+                document.getElementById('welcome-msg').innerText = "Welcome back, " + uName;
+
+                onValue(ref(database, 'products'), (snapshot) => {
+                    const mainList = document.getElementById('mainProductList');
+                    mainList.innerHTML = "";
+                    if(snapshot.exists()){
+                        let hasActiveProduct = false;
+                        snapshot.forEach(child => {
+                            const p = child.val();
+                            if(p.status !== 'inactive') {
+                                hasActiveProduct = true;
+                                mainList.innerHTML += `
+                                    <div class="card-bg p-6 rounded-xl text-center cursor-pointer" onclick="openBooyahRoot('${child.key}', '${p.name}')">
+                                        <i class="fas fa-cube text-4xl green-text mb-2"></i>
+                                        <h3 class="font-bold text-sm uppercase tracking-wide">${p.name}</h3>
+                                    </div>`;
+                            }
+                        });
+                        if(!hasActiveProduct) {
+                            mainList.innerHTML = `<p class="text-center text-gray-500 py-6 text-xs">No active products available right now.</p>`;
+                        }
+                    } else {
+                        mainList.innerHTML = `<p class="text-center text-gray-500 py-6 text-xs">No products added yet by Admin.</p>`;
+                    }
+                });
+                
+                loginSec.style.display = 'none';
+                dashSec.style.display = 'block';
+                if(isAnimationEnabled) dashSec.classList.add('page-transition');
+                loadUserKeys(); 
+            } else {
+                aiFab.style.display = 'none';
+                spinFab.style.display = 'none';
+                loginSec.style.display = 'flex';
+                if(isAnimationEnabled) loginSec.classList.add('page-transition');
+                dashSec.style.display = 'none';
+            }
+            lucide.createIcons();
+        });
+
+        // Updated Login / Registration Form Handling with Animated Status Toast & Redirect Verification
+        document.getElementById('loginForm').onsubmit = (e) => {
+            e.preventDefault();
+            const overlay = document.getElementById('loader-overlay');
+            const spinnerBox = document.getElementById('auth-spinner');
+            const successCheck = document.getElementById('auth-success-check');
+            const statusText = document.getElementById('loader-status-text');
+
+            // Reset UI Loader
+            spinnerBox.style.display = 'block';
+            successCheck.style.display = 'none';
+            statusText.innerText = "Verifying Credentials...";
+            overlay.style.display = 'flex';
+            
+            const email = document.getElementById('username').value.trim();
+            const pass = document.getElementById('password').value.trim();
+
+            const authAction = isRegisterMode 
+                ? createUserWithEmailAndPassword(auth, email, pass)
+                : signInWithEmailAndPassword(auth, email, pass);
+
+            authAction.then(() => {
+                // Show Animated Success Check on Overlay
+                spinnerBox.style.display = 'none';
+                successCheck.style.display = 'block';
+                statusText.innerText = "Login Successful! Redirecting...";
+
+                showAuthToast('success', isRegisterMode ? 'Registration Successful!' : 'Login Successful! Redirecting...');
+
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                }, 1200);
+
+            }).catch(err => { 
+                overlay.style.display = 'none'; 
+                
+                // Show Error Toast Animation on top of screen
+                showAuthToast('error', 'Login Failed! Check Email & Password');
+            });
+        };
+
+        document.getElementById('openSidebar').onclick = () => { sidebar.classList.add('active'); sideOverlay.style.display = 'block'; };
+        sideOverlay.onclick = () => { sidebar.classList.remove('active'); sideOverlay.style.display = 'none'; };
+        document.getElementById('openAddBalance').onclick = () => document.getElementById('modalOverlay').style.display = "flex";
+        document.getElementById('closeBtn').onclick = () => document.getElementById('modalOverlay').style.display = "none";
+        
+        document.getElementById('confirmBtn').onclick = () => {
+            const inputVal = document.getElementById('inputAmount').value;
+            if(inputVal >= 10) { 
+                document.getElementById('finalAmount').innerText = parseFloat(inputVal).toFixed(2); 
+                document.getElementById('modalOverlay').style.display = "none"; 
+                document.getElementById('bkashUI').style.display = "flex"; 
+            } else alert("Minimum deposit is 10 BDT");
+        };
+
+        if(document.getElementById('copyNumberBtn')) {
+            document.getElementById('copyNumberBtn').onclick = function() {
+                const number = document.getElementById('paymentNumber').innerText;
+                window.copyGeneral(number, this);
+            };
+        }
+
+        document.getElementById('exitBkash').onclick = () => document.getElementById('bkashUI').style.display = "none";
+        
+        document.getElementById('finalVerifyBtn').onclick = () => {
+            const tid = document.getElementById('trnxIDInput').value.trim();
+            if(tid.length >= 4) {
+                push(ref(database, 'depositRequests'), { 
+                    uid: auth.currentUser.uid, 
+                    email: auth.currentUser.email, 
+                    amount: parseFloat(document.getElementById('finalAmount').innerText), 
+                    trxId: tid, 
+                    status: "pending",
+                    timestamp: Date.now()
+                });
+                alert("Payment Verification Submitted! Admin will verify and approve your funds."); 
+                document.getElementById('bkashUI').style.display = "none";
+                document.getElementById('trnxIDInput').value = "";
+            } else alert("Please enter a valid Transaction ID");
+        };
+
+        document.getElementById('menuBtn').onclick = (e) => { 
+            e.stopPropagation(); 
+            document.getElementById('profileMenu').classList.toggle('show'); 
+        };
+
+        window.onclick = () => { 
+            if(document.getElementById('profileMenu')) document.getElementById('profileMenu').classList.remove('show');
+            if(document.getElementById('dropdown-inv')) document.getElementById('dropdown-inv').classList.remove('active');
+            if(document.getElementById('menuContentBooyah')) document.getElementById('menuContentBooyah').classList.remove('show');
+        };
+
+        window.toggleAiChat = () => {
+            const chatWindow = document.getElementById('ai-chat-window');
+            chatWindow.style.display = chatWindow.style.display === 'flex' ? 'none' : 'flex';
+        };
+
+        window.handleAiKeyPress = (e) => {
+            if (e.key === 'Enter') {
+                sendAiMessage();
+            }
+        };
+
+        window.sendAiMessage = async () => {
+            const inputField = document.getElementById('aiUserInput');
+            const messageText = inputField.value.trim();
+            if(!messageText) return;
+
+            const container = document.getElementById('aiMessagesContainer');
+            container.innerHTML += `<div class="ai-msg user">${escapeHtml(messageText)}</div>`;
+            inputField.value = "";
+            container.scrollTop = container.scrollHeight;
+
+            const loadingId = 'loading-' + Date.now();
+            container.innerHTML += `<div class="ai-msg bot" id="${loadingId}">typing...</div>`;
+            container.scrollTop = container.scrollHeight;
+
+            setTimeout(() => {
+                if(document.getElementById(loadingId)) document.getElementById(loadingId).remove();
+                
+                let botReply = "এই বিষয়ে আমি নিশ্চিত নই 🤨। সরাসরি সাপোর্টে যোগাযোগ করলে দ্রুত সমাধান পাবেন 👇";
+                const lowerMsg = messageText.toLowerCase();
+
+                if(lowerMsg.includes('hello') || lowerMsg.includes('hi') || lowerMsg.includes('হাই') || lowerMsg.includes('সালাম')) {
+                    botReply = "হ্যালো! প্যানেল শপ রিসেলার প্যানেলে আপনাকে স্বাগতম। ব্যালেন্স এড বা কি (Key) সংক্রান্ত কোনো সাহায্য লাগবে?";
+                } else if(lowerMsg.includes('balance') || lowerMsg.includes('deposit') || lowerMsg.includes('টাকা') || lowerMsg.includes('ডিপোজিট')) {
+                    botReply = "ব্যালেন্স যোগ করতে ড্যাশবোর্ডের 'Add Balance' বাটন ব্যবহার করুন এবং bKash দিয়ে পেমেন্ট করে ট্রানজেকশন আইডি দিন।";
+                } else if(lowerMsg.includes('key') || lowerMsg.includes('buy') || lowerMsg.includes('কিনব')) {
+                    botReply = "নতুন কি কিনতে 'Buy New Keys' অপশনে গিয়ে আপনার পছন্দের প্রোডাক্ট সিলেক্ট করুন।";
+                }
+
+                let extraHtml = "";
+                if(botReply.includes('সরাসরি সাপোর্টে')) {
+                    const cleanWa = currentWhatsAppNumber.replace(/[^0-9]/g, '');
+                    extraHtml = `<br><a href="https://wa.me/${cleanWa}" target="_blank" class="ai-whatsapp-btn"><i class="fab fa-whatsapp"></i> WhatsApp এ ক্লিক করুন</a>`;
+                }
+
+                container.innerHTML += `<div class="ai-msg bot">${botReply}${extraHtml}</div>`;
+                container.scrollTop = container.scrollHeight;
+            }, 800);
+        };
+
+        function escapeHtml(text) {
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+    </script>
+</body>
+</html>
